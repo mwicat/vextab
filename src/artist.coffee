@@ -66,6 +66,7 @@ class Artist
     @current_clef = "treble"
     @current_bends = {}
     @current_octave_shift = 0
+    @current_note_color = "#000000"
     @bend_start_index = null
     @bend_start_strings = null
     @rendered = false
@@ -318,7 +319,8 @@ class Artist
     _.extend(params, note_params)
     stave_notes = _.last(@staves).note_notes
     stave_note = new Vex.Flow.StaveNote({
-      keys: params.spec
+      keys: params.spec,
+      color: @current_note_color,
       duration: @current_duration + (if params.is_rest then "r" else "")
       clef: if params.is_rest then "treble" else @current_clef
       auto_stem: if params.is_rest then false else true
@@ -1004,6 +1006,9 @@ class Artist
       when "octave-shift"
         @current_octave_shift = parseInt(words[1], 10)
         L "Octave shift: ", @current_octave_shift
+      when "note-color"
+        @current_note_color = words[1]
+        L "Note color: ", @current_note_color
       else
         throw new Vex.RERR("ArtistError", "Invalid command '#{words[0]}' at line #{_l} column #{_c}")
 
