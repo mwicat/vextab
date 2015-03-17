@@ -245,3 +245,22 @@ class Vex.Flow.Player
           @loading = false
           @loading_message.content = ""
           @start()
+
+  loadInstruments: (cb) ->
+    if Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] and not @loading
+      cb()
+    else
+      L "Loading instruments..."
+      @loading_message.content = "Loading instruments..."
+      @loading_message.fillColor = "green"
+      @loading = true
+      @paper.view.draw()
+
+      MIDI.loadPlugin
+        soundfontUrl: @options.soundfont_url
+        instruments: [@options.instrument]
+        callback: () =>
+          Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] = true
+          @loading = false
+          @loading_message.content = ""
+          cb()
