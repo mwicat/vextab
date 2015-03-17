@@ -17,7 +17,7 @@ module.exports = function(grunt) {
   var JISON_SRC = ["src/vextab.jison"],
       JISON_OUT = BUILD_DIR + "/vextab-jison.js",
 
-      TABDIV_SRC = ["src/tabdiv.js"],
+      TABDIV_SRC = ["src/tabdiv.js", "src/player.coffee"],
       TABDIV_OUT = "build/vextab-div.js",
 
       TEST_SRC = ["tests/vextab_tests.coffee"],
