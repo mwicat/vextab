@@ -13,6 +13,7 @@ class Vex.Flow.Player
   RESOLUTION = Vex.Flow.RESOLUTION
   noteValues = Vex.Flow.Music.noteValues
   drawDot = Vex.drawDot
+  playing = false
 
   INSTRUMENTS = {
     "acoustic_grand_piano": 0,
@@ -209,6 +210,7 @@ class Vex.Flow.Player
 
   stop: ->
     L "Stop"
+    @playing = false
     window.clearInterval(@interval_id) if @interval_id?
     @play_button.fillColor = '#396' if @play_button?
     @paper.view.draw() if @paper?
@@ -224,7 +226,14 @@ class Vex.Flow.Player
     @play_button.fillColor = '#a36' if @play_button?
     MIDI.programChange(0, INSTRUMENTS[@options.instrument])
     @render() # try to update, maybe notes were changed dynamically
+    @playing = true
     @interval_id = window.setInterval((() => @refresh()), @refresh_rate)
+
+  toggle: ->
+    if @playing
+      @stop()
+    else
+      @play()
 
   play: ->
     L "Play: ", @refresh_rate, @ticks_per_refresh
@@ -264,3 +273,6 @@ class Vex.Flow.Player
           @loading = false
           @loading_message.content = ""
           cb()
+
+  isPlaying: ->
+    return @playing
