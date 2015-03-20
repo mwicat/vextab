@@ -135,6 +135,8 @@ class Vex.Flow.Player
     @paper.view.draw()
     staves = data.voices
 
+    start_marker_valid = false
+
     total_ticks = new Fraction(0, 1)
     for voice_group in staves
       max_voice_tick = new Fraction(0, 1)
@@ -142,6 +144,8 @@ class Vex.Flow.Player
         total_voice_ticks = new Fraction(0, 1)
 
         for note in voice.getTickables()
+          if note == @start_marker_note
+            start_marker_valid = true
           unless note.shouldIgnoreTicks()
             abs_tick = total_ticks.clone()
             abs_tick.add(total_voice_ticks)
@@ -164,6 +168,9 @@ class Vex.Flow.Player
 
       total_ticks.add(max_voice_tick)
 
+    if not start_marker_valid
+      @clearStartMarker()
+
     @all_ticks = _.sortBy(_.values(@tick_notes), (tick) -> tick.value)
     @total_ticks = _.last(@all_ticks)
     L @all_ticks
@@ -173,6 +180,29 @@ class Vex.Flow.Player
     @marker.opacity = 0.2
     @marker.setPosition(new @paper.Point(x * @scale, y * @scale))
     @paper.view.draw()
+
+  clearStartMarker: ->
+    if @start_marker
+      @start_marker.remove()
+      @start_marker = null
+    @start_marker_note = null
+
+  updateStartMarker: (x, y) ->
+    if not @start_marker
+      @start_marker = new @paper.Path.Rectangle(0,0,13,85)
+    @start_marker.fillColor = '#f00'
+    @start_marker.opacity = 0.2
+    @start_marker.setPosition(new @paper.Point(x * @scale, y * @scale))
+    @paper.view.draw()
+
+  setStartMarkerNote: (note) ->
+    @start_marker_note = note
+    x = note.getAbsoluteX() + 4
+    y = note.getStave().getYForLine(2)
+    @updateStartMarker(x, y)
+
+  getStartMarkerNote: ->
+    return @start_marker_note
 
   playNote: (notes) ->
     L "(#{@current_ticks}) playNote: ", notes
