@@ -68,6 +68,7 @@ class Vex.Flow.Player
     @artist.attachPlayer(this)
     @tick_notes = {}
     @all_ticks = []
+    @note_ticks = new WeakMap()
     @tpm = @options.tempo * (RESOLUTION / 4)
     @refresh_rate = 25 #ms: 50 = 20hz
     @ticks_per_refresh = @tpm / (60 * (1000/@refresh_rate))
@@ -155,6 +156,7 @@ class Vex.Flow.Player
                 value: abs_tick.value()
                 notes: [note]
 
+            @note_ticks.set(note, abs_tick.value())
             total_voice_ticks.add(note.getTicks())
 
         if total_voice_ticks.value() > max_voice_tick.value()
@@ -193,6 +195,14 @@ class Vex.Flow.Player
         MIDI.noteOn(0, midi_note, 127, 0)
         MIDI.noteOff(0, midi_note, duration)
 
+  setPosition: (ticks) ->
+    @current_ticks = ticks
+    next_tick = _.find(@all_ticks, (tick) -> tick.value >= ticks)
+    @next_index = _.indexOf(@all_ticks, next_tick)
+
+  getNoteTicks: (note) ->
+    return @note_ticks.get(note)
+
   refresh: ->
     if @done
       @stop()
@@ -220,13 +230,15 @@ class Vex.Flow.Player
     @next_index = 0
     @done = false
 
-  start: ->
+  start: (ticks) ->
     @stop()
     L "Start"
     @play_button.fillColor = '#a36' if @play_button?
     MIDI.programChange(0, INSTRUMENTS[@options.instrument])
     @render() # try to update, maybe notes were changed dynamically
     @playing = true
+    if ticks
+      @setPosition(ticks)
     @interval_id = window.setInterval((() => @refresh()), @refresh_rate)
 
   toggle: ->
@@ -235,10 +247,13 @@ class Vex.Flow.Player
     else
       @play()
 
-  play: ->
+  play: (ticks) ->
     L "Play: ", @refresh_rate, @ticks_per_refresh
+    @loadInstruments(=> @start(ticks))
+
+  loadInstruments: (callback) ->
     if Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] and not @loading
-      @start()
+      callback()
     else
       L "Loading instruments..."
       @loading_message.content = "Loading instruments..."
@@ -253,26 +268,7 @@ class Vex.Flow.Player
           Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] = true
           @loading = false
           @loading_message.content = ""
-          @start()
-
-  loadInstruments: (cb) ->
-    if Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] and not @loading
-      cb()
-    else
-      L "Loading instruments..."
-      @loading_message.content = "Loading instruments..."
-      @loading_message.fillColor = "green"
-      @loading = true
-      @paper.view.draw()
-
-      MIDI.loadPlugin
-        soundfontUrl: @options.soundfont_url
-        instruments: [@options.instrument]
-        callback: () =>
-          Vex.Flow.Player.INSTRUMENTS_LOADED[@options.instrument] = true
-          @loading = false
-          @loading_message.content = ""
-          cb()
+          callback()
 
   isPlaying: ->
     return @playing
