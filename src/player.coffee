@@ -271,11 +271,11 @@ class Vex.Flow.Player
       @setPosition(ticks)
     @interval_id = window.setInterval((() => @refresh()), @refresh_rate)
 
-  toggle: ->
+  toggle: (ticks) ->
     if @playing
       @stop()
     else
-      @play()
+      @play(ticks)
 
   play: (ticks) ->
     L "Play: ", @refresh_rate, @ticks_per_refresh
